@@ -1,17 +1,17 @@
-region = "us-east-2"
+region = "us-east-1"
 vpc_name = "eks-vpc"
 vpc_cidr = "192.168.21.0/24"
 internet_gw_name = "eks-gw"
 subnet1 ={
     name = "eks-subnet1"
     cidr_block = "192.168.21.0/25"
-    availability_zone = "us-east-2a"
+    availability_zone = "us-east-1a"
 
 }
 subnet2 ={
     name = "eks-subnet2"
     cidr_block = "192.168.21.128/25"
-    availability_zone = "us-east-2b"
+    availability_zone = "us-east-1b"
 
 }
 # eip = "eks-eip"

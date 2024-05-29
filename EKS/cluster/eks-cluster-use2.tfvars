@@ -1,4 +1,4 @@
-region = "us-east-2"
+region = "us-east-1"
 vpc_name = "eks-vpc"
 subnet1_name = "eks-subnet1"
 subnet2_name = "eks-subnet2"

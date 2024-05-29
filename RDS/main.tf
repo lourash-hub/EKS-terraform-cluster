@@ -16,7 +16,7 @@ terraform {
   backend "s3" {
     bucket = "lou-terraform-statefile-s3-aws"
     key    = "state/rds-instance.tfstate"
-    region = "us-east-2"
+    region = "us-east-1"
   }
 }
 

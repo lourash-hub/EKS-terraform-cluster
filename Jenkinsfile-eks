@@ -1,55 +1,55 @@
 pipeline {
     agent any 
-        environment {
-            AWS_ACCESS_KEY_ID=credentials('AWS_CRED').AWS_ACCESS_KEY_ID
-            AWS_SECRET_ACCESS_KEY=credentials('AWS_CRED').AWS_SECRET_ACCESS_KEY
-        }
-        parameters {    
-    
-    booleanParam( defaultValue: true, description: '',name: 'apply' )
-    booleanParam( defaultValue: false, description: '',name: 'destroy' )         
-        }
-        stages {
-            stage('Checkout') {
-                steps {
+    parameters {    
+        booleanParam(defaultValue: true, description: '', name: 'apply')
+        booleanParam(defaultValue: false, description: '', name: 'destroy')         
+    }
+    stages {
+        stage('Checkout') {
+            steps {
                 checkout([$class: 'GitSCM', branches: [[name: '*/main']], extensions: [], userRemoteConfigs: [[url: 'https://github.com/lourash-hub/EKS-terraform-cluster.git']]])            
-                  }
             }
-            stage ('checking current dir'){
-                steps {
-                    sh 'pwd;ls;printenv'
+        }
+        stage('Checking current dir') {
+            steps {
+                sh 'pwd; ls; printenv'
+            }
+        }
+        stage('EKS terraform init & Plan') {
+            steps {
+                dir('EKS/cluster') {
+                    withCredentials([aws(credentialsId: 'AWS_CRED', accessKeyVariable: 'AWS_ACCESS_KEY_ID', secretKeyVariable: 'AWS_SECRET_ACCESS_KEY')]) {
+                        sh '''
+                            terraform init
+                            terraform plan -var-file=eks-cluster-use2.tfvars
+                        '''
+                    }
                 }
             }
-            
-            stage ('EKS terraform init & Plan')
-            {
-                steps {
-                    sh 'cd EKS/cluster;terraform init;pwd;terraform plan -var-file=eks-cluster-use2.tfvars'
+        } 
+        stage('EKS Terraform apply') {
+            when {
+                expression { return params.apply == true }
             }
-            } 
-            stage ('EKS Terraform apply')
-            {
-                when {
-                expression {  return params.apply == true  }
+            steps {
+                dir('EKS/cluster') {
+                    withCredentials([aws(credentialsId: 'AWS_CRED', accessKeyVariable: 'AWS_ACCESS_KEY_ID', secretKeyVariable: 'AWS_SECRET_ACCESS_KEY')]) {
+                        sh 'terraform apply -var-file=eks-cluster-use2.tfvars --auto-approve'
+                    }
                 }
-                    steps {
-                    sh 'cd EKS/cluster;terraform apply -var-file=eks-cluster-use2.tfvars --auto-approve'
-                }
-            
-
             }
-            stage ('EKS Terraform destroy')
-            {
-                when {
-                expression {  return params.destroy == true  }
-                }
-                    steps {
-                    sh 'cd EKS/cluster;terraform destroy -var-file=eks-cluster-use2.tfvars --auto-approve'
-                }
-            
-
+        }
+        stage('EKS Terraform destroy') {
+            when {
+                expression { return params.destroy == true }
             }
-
-    
-}
+            steps {
+                dir('EKS/cluster') {
+                    withCredentials([aws(credentialsId: 'AWS_CRED', accessKeyVariable: 'AWS_ACCESS_KEY_ID', secretKeyVariable: 'AWS_SECRET_ACCESS_KEY')]) {
+                        sh 'terraform destroy -var-file=eks-cluster-use2.tfvars --auto-approve'
+                    }
+                }
+            }
+        }
+    }
 }

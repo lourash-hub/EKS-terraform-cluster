@@ -6,19 +6,19 @@ pipeline {
     stages {
         stage('Deploy VPC') {
             steps {
-                echo 'Deploying VPC..'
+                echo "Performing ${params.ACTION} on VPC.."
                 build job: 'deploy-vpc', parameters: [string(name: 'ACTION', value: params.ACTION)]
             }
         }
         stage('Deploy EKS') {
             steps {
-                echo 'Deploying EKS..'
+                echo "Performing ${params.ACTION} on EKS.."
                 build job: 'deploy-eks', parameters: [string(name: 'ACTION', value: params.ACTION)]
             }
         }
         stage('Deploy RDS') {
             steps {
-                echo 'Deploying RDS....'
+                echo "Performing ${params.ACTION} on RDS.."
                 build job: 'deploy-rds', parameters: [string(name: 'ACTION', value: params.ACTION)]
             }
         }

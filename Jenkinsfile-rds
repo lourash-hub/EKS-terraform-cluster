@@ -2,9 +2,6 @@ pipeline {
     agent any 
     parameters {      
         choice(name: 'ACTION', choices: ['apply', 'destroy'], description: 'Select the action to perform') 
-        
-        /*booleanParam(defaultValue: true, description: '', name: 'apply')
-        booleanParam(defaultValue: false, description: '', name: 'destroy')*/
     }
     stages {
         stage('Checkout') {
@@ -19,6 +16,7 @@ pipeline {
         }
         stage('Terraform init') {
             steps {
+                echo "Initializing Terraform with ACTION=${params.ACTION}"
                 dir('RDS') {
                     withCredentials([aws(credentialsId: 'AWS_CRED', accessKeyVariable: 'AWS_ACCESS_KEY_ID', secretKeyVariable: 'AWS_SECRET_ACCESS_KEY')]) {
                         sh '''
@@ -31,9 +29,10 @@ pipeline {
         } 
         stage('Terraform apply') {
             when {
-                expression { return params.apply == true }
+                expression { return params.ACTION == 'apply' }
             }
             steps {
+                echo "Applying Terraform with ACTION=${params.ACTION}"
                 dir('RDS') {
                     withCredentials([aws(credentialsId: 'AWS_CRED', accessKeyVariable: 'AWS_ACCESS_KEY_ID', secretKeyVariable: 'AWS_SECRET_ACCESS_KEY')]) {
                         sh 'terraform apply -var-file=rds-mysql.tfvars --auto-approve'
@@ -43,9 +42,10 @@ pipeline {
         }  
         stage('Terraform destroy') {
             when {
-                expression { return params.destroy == true }
+                expression { return params.ACTION == 'destroy' }
             }
             steps {
+                echo "Destroying Terraform with ACTION=${params.ACTION}"
                 dir('RDS') {
                     withCredentials([aws(credentialsId: 'AWS_CRED', accessKeyVariable: 'AWS_ACCESS_KEY_ID', secretKeyVariable: 'AWS_SECRET_ACCESS_KEY')]) {
                         sh 'terraform destroy -var-file=rds-mysql.tfvars --auto-approve'

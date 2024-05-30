@@ -1,55 +1,26 @@
 pipeline {
-    agent any 
-    parameters {      
-        booleanParam(defaultValue: true, description: '', name: 'apply')
-        booleanParam(defaultValue: false, description: '', name: 'destroy')
+    agent any
+    parameters {
+        choice(name: 'ACTION', choices: ['apply', 'destroy'], description: 'Select the action to perform')
     }
     stages {
-        stage('Checkout') {
+        stage('Deploy VPC') {
             steps {
-                checkout([$class: 'GitSCM', branches: [[name: '*/main']], extensions: [], userRemoteConfigs: [[url: 'https://github.com/lourash-hub/EKS-terraform-cluster.git']]])
+                echo 'Deploying VPC..'
+                build job: 'deploy-vpc', parameters: [string(name: 'ACTION', value: params.ACTION)]
             }
         }
-        stage('Checking current dir') {
+        stage('Deploy EKS') {
             steps {
-                sh 'pwd; ls; printenv'
+                echo 'Deploying EKS..'
+                build job: 'deploy-eks', parameters: [string(name: 'ACTION', value: params.ACTION)]
             }
         }
-        stage('Terraform init') {
+        stage('Deploy RDS') {
             steps {
-                dir('RDS') {
-                    withCredentials([aws(credentialsId: 'AWS_CRED', accessKeyVariable: 'AWS_ACCESS_KEY_ID', secretKeyVariable: 'AWS_SECRET_ACCESS_KEY')]) {
-                        sh '''
-                            terraform init
-                            terraform plan -var-file=rds-mysql.tfvars
-                        '''
-                    }
-                }
+                echo 'Deploying RDS....'
+                build job: 'deploy-rds', parameters: [string(name: 'ACTION', value: params.ACTION)]
             }
-        } 
-        stage('Terraform apply') {
-            when {
-                expression { return params.apply == true }
-            }
-            steps {
-                dir('RDS') {
-                    withCredentials([aws(credentialsId: 'AWS_CRED', accessKeyVariable: 'AWS_ACCESS_KEY_ID', secretKeyVariable: 'AWS_SECRET_ACCESS_KEY')]) {
-                        sh 'terraform apply -var-file=rds-mysql.tfvars --auto-approve'
-                    }
-                }
-            }
-        }  
-        stage('Terraform destroy') {
-            when {
-                expression { return params.destroy == true }
-            }
-            steps {
-                dir('RDS') {
-                    withCredentials([aws(credentialsId: 'AWS_CRED', accessKeyVariable: 'AWS_ACCESS_KEY_ID', secretKeyVariable: 'AWS_SECRET_ACCESS_KEY')]) {
-                        sh 'terraform destroy -var-file=rds-mysql.tfvars --auto-approve'
-                    }
-                }
-            }
-        }             
-    }   
+        }
+    }
 }

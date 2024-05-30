@@ -14,7 +14,7 @@ provider "aws" {
 }
 terraform {
   backend "s3" {
-    bucket = "terraform-statefile-s3-aws"
+    bucket = "lou-terraform-statefile-s3-aws"
     key    = "state/eks-cluster.tfstate"
     region = "us-east-1"
   }
